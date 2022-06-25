@@ -1,0 +1,13 @@
+.cell {
+  border: 0.5px solid #e2e3e3;
+  height: 23px;
+  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.cell:focus {
+  outline: none !important;
+  border: 2px solid #1b73f0;
+}
