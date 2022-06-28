@@ -1,0 +1,16 @@
+.emptyCell {
+  background-color: #f8f9fa;
+  border: 0.5px solid #c0c0c0;
+}
+
+.headerColumn {
+  height: 23px;
+  background-color: #f8f9fa;
+  border: 0.5px solid #c0c0c0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #62666b;
+  font-weight: 600;
+  font-size: 12px;
+}

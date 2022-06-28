@@ -1,4 +1,5 @@
-import { saveCellValue } from '../actionCreators';
+import { saveCellValue, saveSpreadsheet } from '../actionCreators';
+import createSpreadsheetService from '../../services/createSpreadsheet';
 
 export const saveCell = ({
   spreadsheet,
@@ -12,3 +13,13 @@ export const saveCell = ({
     value,
     isReference,
   });
+
+export const createSpreadsheet = () => (dispatch) => {
+  const spreadsheetId = createSpreadsheetService();
+
+  return dispatch(
+    saveSpreadsheet({
+      spreadsheet: spreadsheetId,
+    })
+  );
+};

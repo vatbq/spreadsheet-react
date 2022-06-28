@@ -5,11 +5,9 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { saveCell } from '../../state/actions';
 import { selectCellValue } from '../../state/selectors';
-import { START_REFERENCE_SYMBOL } from '../../constants';
+import { IS_REFERENCE_REGEX } from '../../constants';
 
 import classes from './Cell.module.scss';
-
-const regex = /([A-Z]*[A-Z])([1-9]|[1-9][0-9]|100)\b/;
 
 const Cell = ({ spreadsheet, cellKey }) => {
   const dispatch = useDispatch();
@@ -21,31 +19,28 @@ const Cell = ({ spreadsheet, cellKey }) => {
 
   const [currentValue, setCurrentValue] = useState(cellValue);
 
-  const handleCellChangeValue = useCallback((inputValue) => {
-    if (inputValue[0] === START_REFERENCE_SYMBOL) {
-      const values = inputValue.split(START_REFERENCE_SYMBOL);
-      const reference = values[1];
-
-      if (regex.test(reference)) {
+  const handleCellChangeValue = useCallback(
+    (inputValue) => {
+      if (IS_REFERENCE_REGEX.test(inputValue)) {
         dispatch(
           saveCell({
             spreadsheet,
             cellKey,
-            value: reference,
+            value: inputValue.substring(1),
             isReference: true,
           })
         );
       } else {
         dispatch(saveCell({ spreadsheet, cellKey, value: inputValue }));
       }
-    } else {
-      dispatch(saveCell({ spreadsheet, cellKey, value: inputValue }));
-    }
-  }, []);
+    },
+    [spreadsheet, cellKey]
+  );
 
   const onCellChange = useCallback((e) => {
-    setCurrentValue(e.target.value);
-    handleCellChangeValue(e.target.value);
+    const inputValue = e.target.value;
+    setCurrentValue(inputValue);
+    handleCellChangeValue(inputValue);
   }, []);
 
   useEffect(() => {

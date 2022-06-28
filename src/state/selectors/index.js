@@ -2,6 +2,8 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 const selectSpreadsheets = (state) => state.spreadsheets;
+export const selectJustCreatedSpreadsheet = (state) =>
+  state.justCreatedSpreadsheet;
 
 export const selectCellValue = createSelector(
   selectSpreadsheets,

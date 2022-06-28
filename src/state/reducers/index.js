@@ -4,10 +4,14 @@ import { createReducer } from '@reduxjs/toolkit';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import { saveCellValue } from '../actionCreators';
+import thereIsCircularReference from '../../services/thereIsCircularReference';
+import updateCells from '../../services/updateCells';
+
+import { saveCellValue, saveSpreadsheet } from '../actionCreators';
 
 export const initialState = {
   spreadsheets: {},
+  justCreatedSpreadsheet: null,
 };
 
 const persistConfig = {
@@ -15,55 +19,25 @@ const persistConfig = {
   storage,
 };
 
-const thereIsCircularReference = (originalKey, originalValue, state) => {
-  const stack = [{ ref: originalValue }];
-
-  while (stack.length) {
-    const { ref } = stack.pop();
-
-    if (ref === originalKey) {
-      return true;
-    }
-
-    if (state.cells[ref]) {
-      const cell = state.cells[ref];
-      stack.push({ ref: cell.reference });
-    }
-  }
-
-  return false;
-};
-
-const updateCells = (state, key, value) => {
-  const cellsToUpdate = Object.values(state.cells).filter(
-    // eslint-disable-next-line comma-dangle
-    ({ reference }) => reference === key
-  );
-
-  if (cellsToUpdate.length) {
-    cellsToUpdate.forEach(
-      ({ cellKey: newKey }) => (state.cells = updateCells(state, newKey, value))
-    );
-  }
-
-  state.cells[key].value = value;
-
-  return state.cells;
-};
-
 const spreadsheetsReducer = persistReducer(
   persistConfig,
   createReducer(initialState, {
+    [saveSpreadsheet]: (state, { payload }) => {
+      const { spreadsheet } = payload;
+      state.spreadsheets[spreadsheet] = {
+        cells: {},
+        error: null,
+      };
+
+      state.justCreatedSpreadsheet = spreadsheet;
+    },
     [saveCellValue]: (state, { payload }) => {
+      state.justCreatedSpreadsheet = null;
+
       const { spreadsheet, value, cellKey, isReference } = payload;
-      if (!state.spreadsheets[spreadsheet]) {
-        state.spreadsheets[spreadsheet] = {
-          cells: {},
-          error: null,
-        };
-      }
 
       const currentSpreadsheet = state.spreadsheets[spreadsheet];
+
       currentSpreadsheet.error = null;
 
       const circularReference = thereIsCircularReference(
