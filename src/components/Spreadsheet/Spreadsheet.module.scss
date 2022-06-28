@@ -1,6 +1,3 @@
-.container {
-}
-
 .headerColumns {
   display: grid;
   grid-template-columns: 3rem repeat(30, 8rem);
@@ -29,6 +26,12 @@
   color: #62666b;
   font-weight: 600;
   font-size: 12px;
+}
+
+.alert {
+  position: fixed;
+  top: 90%;
+  left: 43%;
 }
 
 // selected column and row #e8eaed

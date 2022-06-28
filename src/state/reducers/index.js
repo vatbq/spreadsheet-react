@@ -1,19 +1,18 @@
+/* eslint-disable no-return-assign */
 /* eslint-disable no-param-reassign */
-import { createReducer } from "@reduxjs/toolkit";
-import { persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import { createReducer } from '@reduxjs/toolkit';
+import { persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
 
-import { saveCellValue } from "../actionCreators";
+import { saveCellValue } from '../actionCreators';
 
 export const initialState = {
-  cells: {},
-  error: null,
+  spreadsheets: {},
 };
 
 const persistConfig = {
-  key: "spreadsheet",
+  key: 'spreadsheets',
   storage,
-  blacklist: ["erro"],
 };
 
 const thereIsCircularReference = (originalKey, originalValue, state) => {
@@ -22,7 +21,7 @@ const thereIsCircularReference = (originalKey, originalValue, state) => {
   while (stack.length) {
     const { ref } = stack.pop();
 
-    if (ref == originalKey) {
+    if (ref === originalKey) {
       return true;
     }
 
@@ -37,12 +36,13 @@ const thereIsCircularReference = (originalKey, originalValue, state) => {
 
 const updateCells = (state, key, value) => {
   const cellsToUpdate = Object.values(state.cells).filter(
-    ({ reference }) => reference == key
+    // eslint-disable-next-line comma-dangle
+    ({ reference }) => reference === key
   );
 
   if (cellsToUpdate.length) {
     cellsToUpdate.forEach(
-      ({ key: newKey }) => (state.cells = updateCells(state, newKey, value))
+      ({ cellKey: newKey }) => (state.cells = updateCells(state, newKey, value))
     );
   }
 
@@ -51,43 +51,57 @@ const updateCells = (state, key, value) => {
   return state.cells;
 };
 
-const spreadsheetReducer = persistReducer(
+const spreadsheetsReducer = persistReducer(
   persistConfig,
   createReducer(initialState, {
     [saveCellValue]: (state, { payload }) => {
-      const { value, key, isReference } = payload;
+      const { spreadsheet, value, cellKey, isReference } = payload;
+      if (!state.spreadsheets[spreadsheet]) {
+        state.spreadsheets[spreadsheet] = {
+          cells: {},
+          error: null,
+        };
+      }
 
-      const circularReference = thereIsCircularReference(key, value, state);
+      const currentSpreadsheet = state.spreadsheets[spreadsheet];
+      currentSpreadsheet.error = null;
+
+      const circularReference = thereIsCircularReference(
+        cellKey,
+        value,
+        currentSpreadsheet
+      );
 
       if (circularReference) {
-        state.error = "Circular reference detected";
-        console.log("error", state.error);
+        currentSpreadsheet.error = 'Circular reference detected';
         return state;
       }
 
-      state.error = null;
-
       if (isReference) {
-        const newValue = state.cells[value]?.value;
+        const newValue = currentSpreadsheet.cells[value]?.value;
 
-        state.cells[key] = {
+        currentSpreadsheet.cells[cellKey] = {
           value: newValue,
-          key,
+          cellKey,
           reference: value,
         };
 
-        state.cells = { ...updateCells(state, key, newValue) };
+        currentSpreadsheet.cells = {
+          ...updateCells(currentSpreadsheet, cellKey, newValue),
+        };
       } else {
-        state.cells[key] = {
+        currentSpreadsheet.cells[cellKey] = {
           value,
-          key,
+          cellKey,
           reference: null,
         };
 
-        state.cells = { ...updateCells(state, key, value) };
+        currentSpreadsheet.cells = {
+          ...updateCells(state.spreadsheets[spreadsheet], cellKey, value),
+        };
       }
     },
   })
 );
 
-export default spreadsheetReducer;
+export default spreadsheetsReducer;

@@ -1,45 +1,51 @@
-import PropTypes from "prop-types";
-import { useCallback, useEffect, useState } from "react";
-import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import debounce from "lodash.debounce";
+/* eslint-disable react/react-in-jsx-scope */
+import PropTypes from 'prop-types';
+import { useCallback, useEffect, useState } from 'react';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
-import { saveCell } from "../../state/actions";
-import { selectCellValue } from "../../state/selectors";
+import { saveCell } from '../../state/actions';
+import { selectCellValue } from '../../state/selectors';
+import { START_REFERENCE_SYMBOL } from '../../constants';
 
-import classes from "./Cell.module.scss";
+import classes from './Cell.module.scss';
 
-const regex = new RegExp(/([A-Z]*[A-Z])([1-9]|[1-9][0-9]|100)\b/);
+const regex = /([A-Z]*[A-Z])([1-9]|[1-9][0-9]|100)\b/;
 
-const Cell = ({ cellKey }) => {
+const Cell = ({ spreadsheet, cellKey }) => {
+  const dispatch = useDispatch();
+
   const cellValue = useSelector(
-    (state) => selectCellValue(state, cellKey),
+    (state) => selectCellValue(state, spreadsheet, cellKey),
     shallowEqual
   );
-  const dispatch = useDispatch();
 
   const [currentValue, setCurrentValue] = useState(cellValue);
 
   const handleCellChangeValue = useCallback((inputValue) => {
-    if (inputValue[0] == "=") {
-      const values = inputValue.split("=");
+    if (inputValue[0] === START_REFERENCE_SYMBOL) {
+      const values = inputValue.split(START_REFERENCE_SYMBOL);
       const reference = values[1];
 
       if (regex.test(reference)) {
-        dispatch(saveCell(cellKey, reference, true));
+        dispatch(
+          saveCell({
+            spreadsheet,
+            cellKey,
+            value: reference,
+            isReference: true,
+          })
+        );
+      } else {
+        dispatch(saveCell({ spreadsheet, cellKey, value: inputValue }));
       }
     } else {
-      dispatch(saveCell(cellKey, inputValue));
+      dispatch(saveCell({ spreadsheet, cellKey, value: inputValue }));
     }
   }, []);
 
-  const debouncedHandleCellChangeValue = useCallback(
-    debounce(handleCellChangeValue, 300),
-    []
-  );
-
   const onCellChange = useCallback((e) => {
     setCurrentValue(e.target.value);
-    debouncedHandleCellChangeValue(e.target.value);
+    handleCellChangeValue(e.target.value);
   }, []);
 
   useEffect(() => {
@@ -59,6 +65,7 @@ const Cell = ({ cellKey }) => {
 
 Cell.propTypes = {
   cellKey: PropTypes.string.isRequired,
+  spreadsheet: PropTypes.string.isRequired,
 };
 
 export default Cell;

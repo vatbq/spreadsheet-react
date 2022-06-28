@@ -1,3 +1,3 @@
-import { createAction } from "@reduxjs/toolkit";
+import { createAction } from '@reduxjs/toolkit';
 
-export const saveCellValue = createAction("[Cell] Save Cell Value");
+export const saveCellValue = createAction('[Cell] Save Cell Value');

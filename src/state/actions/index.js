@@ -1,4 +1,14 @@
-import { saveCellValue } from "../actionCreators";
+import { saveCellValue } from '../actionCreators';
 
-export const saveCell = (key, value, isReference = false) =>
-  saveCellValue({ key, value, isReference });
+export const saveCell = ({
+  spreadsheet,
+  cellKey,
+  value,
+  isReference = false,
+}) =>
+  saveCellValue({
+    spreadsheet,
+    cellKey,
+    value,
+    isReference,
+  });

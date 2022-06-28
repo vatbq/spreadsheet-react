@@ -1,15 +1,16 @@
-// import PropTypes from "prop-types";
+import { useParams } from 'react-router-dom';
+import Alert from '@mui/material/Alert';
+import { shallowEqual, useSelector } from 'react-redux';
 
-import Cell from "../Cell";
-import calculateColumnLetter from "../../utils/calculateColumnLetter";
-import generateRows from "../../utils/generateRows";
+import Cell from '../Cell';
+import calculateColumnLetter from '../../utils/calculateColumnLetter';
+import generateRows from '../../utils/generateRows';
+import { COLUMNS_COUNT, ROW_COUNT } from '../../constants';
+import { selectSpreadsheetError } from '../../state/selectors';
 
-import classes from "./Spreadsheet.module.scss";
+import classes from './Spreadsheet.module.scss';
 
-const COLUMNS_COUNT = 31;
-const ROW_COUNT = 100;
-
-const generateSpreadsheet = () =>
+const generateSpreadsheet = (spreadsheet) =>
   generateRows(ROW_COUNT, (row) =>
     generateRows(COLUMNS_COUNT, (column) => {
       if (column === 0) {
@@ -23,13 +24,15 @@ const generateSpreadsheet = () =>
       const columnName = calculateColumnLetter(column);
       const cellName = `${columnName}${row + 1}`;
 
-      return <Cell key={cellName} cellKey={cellName} />;
+      return (
+        <Cell key={cellName} spreadsheet={spreadsheet} cellKey={cellName} />
+      );
     })
   );
 
 const generateColumns = () =>
   generateRows(COLUMNS_COUNT, (index) => {
-    if (index == 0) {
+    if (index === 0) {
       return <div key="emptyCell" className={classes.emptyCell} />;
     }
 
@@ -42,13 +45,27 @@ const generateColumns = () =>
     );
   });
 
-const Spreadsheet = () => (
-  <div className={classes.container}>
-    <div className={classes.headerColumns}>{generateColumns()}</div>
-    <div className={classes.content}>{generateSpreadsheet()}</div>
-  </div>
-);
+const Spreadsheet = () => {
+  const { id } = useParams();
 
-Spreadsheet.propTypes = {};
+  const errorMessage = useSelector(
+    (state) => selectSpreadsheetError(state, id),
+    shallowEqual
+  );
+
+  return (
+    id && (
+      <div className={classes.container}>
+        {errorMessage && (
+          <Alert className={classes.alert} severity="error">
+            {errorMessage}
+          </Alert>
+        )}
+        <div className={classes.headerColumns}>{generateColumns()}</div>
+        <div className={classes.content}>{generateSpreadsheet(id)}</div>
+      </div>
+    )
+  );
+};
 
 export default Spreadsheet;
